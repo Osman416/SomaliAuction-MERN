@@ -1,0 +1,22 @@
+MONGODB_URI=mongodb+srv://osman:Osman123@auctioncluster.fsxur.mongodb.net/booking?retryWrites=true&w=majority&appName=AuctionCluster
+
+
+PORT=8000
+CORS_ORIGIN=http://localhost:5173
+
+
+JWT_SECRET=auctionwebsite@@@$$$&&&
+JWT_EXPIRES_IN=90d
+RESET_TOKEN_SECRET=resetpassword@@@$$$&&&
+
+
+CLOUDINARY_URL=cloudinary://572814858734576:UCdUevY_a_a5oFmxls3y6O_0AME@ddht75fmn
+CLOUDINARY_CLOUD_NAME=Auction
+CLOUDINARY_API_KEY=572814858734576
+CLOUDINARY_API_SECRET=UCdUevY_a_a5oFmxls3y6O_0AME
+
+USER_EMAIL=burusweyn411@gmail.com
+USER_PASSWORD=Warya1995
+
+; STRIPE_KEY=pk_live_51PnN4q01nQyE2THihyfVpszLM25lZicu2lii4oM82Y6tGbQGzXT3bZtRiKvVJGjzb1itfYcMVwi6zTpLx3MFgVn500EOCayMYy
+STRIPE_KEY=pk_test_51PnN4q01nQyE2THiUcb9fGbPfq7dIxrmjLshGhJo8JZhtMUascRqlkHFbyBfHW5qMrBafDxoeCVkvXSoeetGsuaN00CSyAqkMU

@@ -53,25 +53,24 @@ const CountDownTimer = (props) => {
     if (completed) {
       // Render a completed state
       return (
-        <span className="text-red-400 animate-fadeinout">Auction Ended!</span>
+        <div className="text-red-400 animate-fadeinout">Auction Ended!</div>
       );
     } else if (currentTime < startTime) {
       // Render a countdown to start time
       return (
-        <span>
-          Auction start at
-          {" " + new Date(startTime).toLocaleString()}
-        </span>
+        <div>
+          Auction starts at{" " + new Date(startTime).toLocaleString()}
+        </div>
       );
     } else {
       // Render a countdown to end time
       return (
-        <span>
+        <div>
           {days}d {hours}h {minutes}m {seconds}s
-        </span>
+        </div>
       );
     }
-  };
+  };  
 
   return (
     <div>

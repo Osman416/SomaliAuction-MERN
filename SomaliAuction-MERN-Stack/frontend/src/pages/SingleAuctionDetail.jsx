@@ -293,14 +293,14 @@ const SingleAuctionDetail = ({ noPadding }) => {
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="text-heading-color font-medium">Time </h3>
-                <p className="text-body-text-color">
+                <div className="text-body-text-color">
                   <CountDownTimer
                     startTime={singleAuction?.startTime}
                     endTime={singleAuction?.endTime}
                     id={singleAuction?._id}
                     Winner={handleWinner}
                   />
-                </p>
+                </div>
               </div>
             </div>
           </div>

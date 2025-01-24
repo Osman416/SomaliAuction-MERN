@@ -6,7 +6,7 @@ import User from "../models/user.model.js";
 // const stripe = new Stripe(process.env.STRIPE_KEY);
 // const stripe = new Stripe("sk_test_51Oktd0SFo6ikMNdBlRddtnGqOJL1WRx92gJ4BTlpcP07172oQ2F3jTE5F0HtWeCSu3z0MA1GQhiAhG1oysUQ3Nq600eUow95pq")
 
-const stripe = new Stripe("sk_test_51P5t81Lvvxf0OOpIgdu78eLqln3YJO5Q7NfKMfNEl93qXkiLjy6FBzvY37O8p1QlhWOWwQUg6m9zU5WtDaYfKMLS00rhq7lcCT")
+const stripe = new Stripe("sk_test_51PnN4q01nQyE2THiHujPuRzjROeazyw2QlZEPNJ8d07yitvFDvPYBdP5GE5hzkjnlnbq4WxZ2S95Pz99FCgUd9aW00Zxi61czk")
 
 
 // recluze
@@ -23,7 +23,7 @@ const stripe = new Stripe("sk_test_51P5t81Lvvxf0OOpIgdu78eLqln3YJO5Q7NfKMfNEl93q
 // @route POST /api/v1/payments/add-payment-method
 // @access Private
 
-const addPaymentMethodToCustomer = asyncHandler(async (req, res) => {
+/* const addPaymentMethodToCustomer = asyncHandler(async (req, res) => {
   try {
     const { paymentMethodId } = req.body;
     console.log(paymentMethodId, "paymentMethodId,,,,,,,");
@@ -52,30 +52,129 @@ const addPaymentMethodToCustomer = asyncHandler(async (req, res) => {
         .status(404)
         .json(new ApiResponse(404, "Payment method not added."));
     }
+    stripeCustomer.paymentMethodId = paymentMethodId;
+    await stripeCustomer.save();
+    console.log("Payment method attached and saved", paymentMethod);
 
-    if (paymentMethod) {
-      stripeCustomer.paymentMethodId = paymentMethodId;
-      await stripeCustomer.save();
+    // Find user and update verifiedPayment
+    const user = await User.findById(getUserId);
+    console.log(user, "user");
+    if (!user) {
+      return res.status(404).json(new ApiResponse(404, "User not found"));
     }
+    user.paymentVerified = true;
+    await user.save();
+    console.log("User payment verified updated", user);
 
-     //finde user and update verifiedPayment
-     const user = await User.findById({ _id: getUserId });
-     console.log(user, "user,,,,,,,,payment method");
-     if (!user) {
-       return res.status(404).json(new ApiResponse(404, "User not found"));
-     }
-     user.paymentVerified = true;
-     await user.save();
     return res
       .status(200)
       .json(new ApiResponse(200, "Payment method added successfully"));
   } catch (error) {
-    console.log(error);
+    console.error('Error in addPaymentMethodToCustomer:', error);
 
     return res
       .status(500)
       .json(new ApiResponse(500, error?.message || "Internal server error"));
-  }
+  } */
+
+  const addPaymentMethodToCustomer = asyncHandler(async (req, res) => {
+    try {
+      const { paymentMethodId } = req.body;
+      console.log(paymentMethodId, "paymentMethodId");
+  
+      if (!paymentMethodId) {
+        return res.status(400).json(new ApiResponse(400, "Payment method is required"));
+      }
+  
+      const getUserId = req.user._id.toString();
+      console.log(getUserId, "userId");
+  
+      // Check if PaymentMethod exists for user
+      let stripeCustomer = await PaymentMethod.findOne({ userId: getUserId });
+      console.log(stripeCustomer, "stripeCustomer");
+  
+      if (!stripeCustomer) {
+        // Create new Stripe customer if none exists
+        const customer = await stripe.customers.create({
+          email: req.user.email,
+          name: req.user.fullName,
+        });
+        console.log(customer, "New Stripe customer created");
+  
+        stripeCustomer = new PaymentMethod({
+          userId: getUserId,
+          stripeCustomerId: customer.id,
+          paymentMethodId,
+        });
+        await stripeCustomer.save();
+        console.log("New Stripe customer saved to database", stripeCustomer);
+      } else {
+        // Verify that the customer exists in Stripe
+        try {
+          const customer = await stripe.customers.retrieve(stripeCustomer.stripeCustomerId);
+          console.log(customer, "Stripe customer retrieved");
+        } catch (error) {
+          console.error('Error retrieving customer:', error);
+          return res.status(404).json(new ApiResponse(404, "Stripe customer not found"));
+        }
+      }
+  
+      console.log(`Attaching PaymentMethod ${paymentMethodId} to Customer ${stripeCustomer.stripeCustomerId}`);
+  
+      // Attach payment method to the existing customer
+      const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: stripeCustomer.stripeCustomerId,
+      });
+  
+      if (!paymentMethod || paymentMethod.error) {
+        console.error('PaymentMethod attach failed:', paymentMethod.error);
+        return res.status(500).json(new ApiResponse(500, `Payment method attach failed: ${paymentMethod.error.message}`));
+      }
+  
+      stripeCustomer.paymentMethodId = paymentMethodId;
+      await stripeCustomer.save();
+      console.log("Payment method attached and saved", paymentMethod);
+  
+      const user = await User.findById(getUserId);
+      console.log(user, "user");
+      if (!user) {
+        return res.status(404).json(new ApiResponse(404, "User not found"));
+      }
+      user.paymentVerified = true;
+      await user.save();
+      console.log("User payment verified updated", user);
+  
+      return res.status(200).json(new ApiResponse(200, "Payment method added successfully"));
+    } catch (error) {
+      console.error('Error in addPaymentMethodToCustomer:', error);
+      return res.status(500).json(new ApiResponse(500, error?.message || "Internal server error"));
+    }
+
+
+
+  //   if (paymentMethod) {
+  //     stripeCustomer.paymentMethodId = paymentMethodId;
+  //     await stripeCustomer.save();
+  //   }
+
+  //    //finde user and update verifiedPayment
+  //    const user = await User.findById({ _id: getUserId });
+  //    console.log(user, "user,,,,,,,,payment method");
+  //    if (!user) {
+  //      return res.status(404).json(new ApiResponse(404, "User not found"));
+  //    }
+  //    user.paymentVerified = true;
+  //    await user.save();
+  //   return res
+  //     .status(200)
+  //     .json(new ApiResponse(200, "Payment method added successfully"));
+  // } catch (error) {
+  //   console.log(error);
+
+  //   return res
+  //     .status(500)
+  //     .json(new ApiResponse(500, error?.message || "Internal server error"));
+  // }
 });
 
 // @desc update payment method

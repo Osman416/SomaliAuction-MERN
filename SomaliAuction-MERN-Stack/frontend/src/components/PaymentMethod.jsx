@@ -11,7 +11,7 @@ import { useSelector,useDispatch } from "react-redux";
 import { getCurrentUser } from "../store/auth/authSlice";
 import { toast } from "react-toastify";
 
-const stripe = await loadStripe(
+const stripePromise = await loadStripe(
   "pk_test_51PnN4q01nQyE2THiUcb9fGbPfq7dIxrmjLshGhJo8JZhtMUascRqlkHFbyBfHW5qMrBafDxoeCVkvXSoeetGsuaN00CSyAqkMU"
 );
 
@@ -19,21 +19,19 @@ const CheckoutForm = () => {
   const { user } = useSelector((state) => state.auth);
   const stripe = useStripe();
   const elements = useElements();
-  const dispatch=useDispatch()
+  const dispatch = useDispatch()
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
   ////console.log(user, "user in payment method..........");
-  useEffect(()=>{
-
-  },[user])
+/*   useEffect(()=>{
+  },[user]) */
 
   useEffect(()=>{
     dispatch(getCurrentUser())
-    
-  },[])
+  },[dispatch])
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -57,68 +55,100 @@ const CheckoutForm = () => {
     });
 
     if (error) {
-      ////console.log("[error]", error.message);
+      console.log("[error]", error.message);
+      toast.error("Error creating payment method: " + error.message);
     } else {
-      ////console.log("[PaymentMethod]", paymentMethod);
+      console.log("[PaymentMethod]", paymentMethod);
+
+      const url = user?.paymentVerified
+        ? "http://localhost:8000/api/v1/payments/update-payment-method"
+        : "http://localhost:8000/api/v1/payments/add-payment-method";
 
       // Send paymentMethod.id to your server
+
+      axios
+        .post(
+          url,
+          { paymentMethodId: paymentMethod.id },
+          { withCredentials: true }
+        )
+        .then((response) => {
+          console.log(response.data);
+          toast.success(
+            user?.paymentVerified
+              ? "Payment Method Updated Successfully"
+              : "Payment Method Added Successfully"
+          );
+          setName("");
+          setEmail("");
+          setAddress("");
+          cardElement.clear();
+        })
+        .catch((error) => {
+          console.error("Error in request:", error.response.data);
+          toast.error(
+            "Error adding payment method: " +
+              (error.response.data.error || error.message)
+          );
+        });
+
       //use axios
-      if (user?.paymentVerified){
-        axios
-          .post(
-            "http://localhost:8000/api/v1/payments/update-payment-method",
-            { paymentMethodId: paymentMethod.id },
-            { withCredentials: true }
-          )
-          .then((response) => {
-            ////console.log(response.data);
-            //react toastfy
-            toast.success("Payment Method Updated Successfully");
-            //empty inputs
-            setName("");
-            setEmail("");
-            setAddress("");
-            //emptty cardelement
-            cardElement.clear();
+      // if (user?.paymentVerified){
+      //   axios
+      //     .post(
+      //       "http://localhost:8000/api/v1/payments/update-payment-method",
+      //       { paymentMethodId: paymentMethod.id },
+      //       { withCredentials: true }
+      //     )
+      //     .then((response) => {
+      //       ////console.log(response.data);
+      //       //react toastfy
+      //       toast.success("Payment Method Updated Successfully");
+      //       //empty inputs
+      //       setName("");
+      //       setEmail("");
+      //       setAddress("");
+      //       //emptty cardelement
+      //       cardElement.clear();
             
-          })
-          .catch((error) => {
-            ////console.error(error);
-          });
+      //     })
+      //     .catch((error) => {
+      //       ////console.error(error);
+      //     });
 
-          ////console.log("Payment method updating........");
+      //     ////console.log("Payment method updating........");
 
-        } else {
-        axios
-          .post(
-            "http://localhost:8000/api/v1/payments/add-payment-method",
-            {
-              paymentMethodId: paymentMethod.id,
-            },
-            { withCredentials: true }
-          )
-          .then((response) => {
-            if (response.status === 200) {
-              ////console.log(response.data); // Should log "Payment method added successfully"
-              //react toastfy
-              toast.success("Payment Method Added Successfully");
-              //empty inputs
-              setName("");
-              setEmail("");
-              setAddress("");
-              //emptty cardelement
-              cardElement.clear();
+      //   } else {
+      //   axios
+      //     .post(
+      //       "http://localhost:8000/api/v1/payments/add-payment-method",
+      //       {
+      //         paymentMethodId: paymentMethod.id,
+      //       },
+      //       { withCredentials: true }
+      //     )
+      //     .then((response) => {
+      //       if (response.status === 200) {
+      //         ////console.log(response.data); // Should log "Payment method added successfully"
+      //         //react toastfy
+      //         toast.success("Payment Method Added Successfully");
+      //         //empty inputs
+      //         setName("");
+      //         setEmail("");
+      //         setAddress("");
+      //         //emptty cardelement
+      //         cardElement.clear();
 
-            } else {
-              ////console.log("Failed to add payment method");
-            }
-          })
-          .catch((error) => {
-            ////console.error(error);
-          });
-          ////console.log("Payment method adding........");
+      //       } else {
+      //         ////console.log("Failed to add payment method");
+      //       }
+      //     })
+      //     .catch((error) => {
+      //       ////console.error(error);
+      //     });
+      //     ////console.log("Payment method adding........");
 
-      }
+      // }
     }
   };
 
@@ -135,16 +165,14 @@ const CheckoutForm = () => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Full Name on card"
-          
           required
         />
         <input
           type="email"
-          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
-          
+          required
         />
         <input
           type="text"
@@ -183,7 +211,7 @@ const PaymentMethod = () => {
   //   fetchStripe();
   // }, []);
   return (
-    <Elements stripe={stripe}>
+    <Elements stripe={stripePromise}>
       <CheckoutForm />
     </Elements>
   );

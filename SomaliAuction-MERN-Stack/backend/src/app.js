@@ -14,6 +14,11 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 
+// Define a route for the root URL
+app.get('/', (req, res) => {
+    res.send('Welcome to the backend server!');
+  });
+
 
 //routes import
 

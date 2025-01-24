@@ -54,11 +54,11 @@ const SearchLocationCategory = () => {
               setCity(district);
             }
           } catch (error) {
-            //console.error('Error getting city name:', error);
+            console.error('Error getting city name:', error);
           }
         },
         (error) => {
-          //console.error('Error getting location:', error);
+          console.error('Error getting location:', error);
         },
         {
           enableHighAccuracy: true
@@ -80,21 +80,13 @@ const SearchLocationCategory = () => {
           onChange={(e) => setFilter({ ...filter, location: e.target.value })}
         >
           <option value="">Select Location</option>
-          {
-                city && <option value={city} >
-                Current Location
-                </option>
-              }
-          {cities.data &&
-            cities.data.map((category) => (
-              <>
-             
-               <option key={category._id} value={category._id}>
-                {category.name}
-              </option>
-              </>
-             
-            ))}
+          {city && <option value={city} >Current Location</option>}
+          {cities.data && cities.data.map((category) => (
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
+          ))}
+
         </select>
 
         <select
@@ -104,8 +96,7 @@ const SearchLocationCategory = () => {
           onChange={(e) => setFilter({ ...filter, category: e.target.value })}
         >
           <option value="">Select Category</option>
-          {categories.data &&
-            categories.data.map((category) => (
+          {categories.data && categories.data.map((category) => (
               <option key={category._id} value={category._id}>
                 {category.name}
               </option>
@@ -120,7 +111,8 @@ const SearchLocationCategory = () => {
         />
         <button
           className="bg-theme-color mt-2  hover:bg-color-danger text-white text-sm font-bold  rounded-md my-auto px-3 py-2  text-center no-underline border-none"
-          onClick={() => SearchByFilter()}
+          //onClick={() => SearchByFilter()}
+          onClick={SearchByFilter}
         >
           Search
         </button>
